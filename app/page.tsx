@@ -1,235 +1,621 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 
-// Browser Speech API types (not in all TS lib versions)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnySpeechRecognition = any
+// ── Types ────────────────────────────────────────────────────────────────────
 
-interface CommandEntry {
+interface JournalEntry {
+  id: string
+  date: string        // ISO string
   transcript: string
-  response: string
-  action: string
-  device: string
-  mock: boolean
-  timestamp: Date
+  summary: string
+  mood: string
+  moodEmoji: string
+  insights: string[]
+  tags: string[]
+  affirmation: string
+  wordCount: number
+  duration: number    // seconds
 }
 
-const AFFILIATE_PRODUCTS = [
-  { name: 'Philips Hue Starter Kit', price: '$79', url: 'https://amazon.com/dp/B07FZJN2HZ', tag: 'Smart Lights' },
-  { name: 'Nest Learning Thermostat', price: '$249', url: 'https://amazon.com/dp/B07HNHGS16', tag: 'Thermostat' },
-  { name: 'August Smart Lock Pro',   price: '$199', url: 'https://amazon.com/dp/B0752FPMG1', tag: 'Smart Lock' },
-  { name: 'Echo Dot (5th Gen)',       price: '$49',  url: 'https://amazon.com/dp/B09ZX5K27T', tag: 'Voice Hub' },
-]
+interface AIResult {
+  summary: string
+  mood: string
+  moodEmoji: string
+  insights: string[]
+  tags: string[]
+  affirmation: string
+  wordCount: number
+}
 
-export default function Home() {
+const STORAGE_KEY = 'voicejournal-entries'
+
+const MOOD_COLORS: Record<string, string> = {
+  Happy:      '#fbbf24',
+  Reflective: '#a78bfa',
+  Anxious:    '#f87171',
+  Grateful:   '#34d399',
+  Frustrated: '#fb923c',
+  Excited:    '#f472b6',
+  Sad:        '#60a5fa',
+  Neutral:    '#94a3b8',
+  Motivated:  '#10b981',
+  Tired:      '#6b7280',
+}
+
+// ── Storage helpers ──────────────────────────────────────────────────────────
+
+function loadEntries(): JournalEntry[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch { return [] }
+}
+
+function saveEntries(entries: JournalEntry[]) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)) } catch { /* quota */ }
+}
+
+// ── Waveform bars ────────────────────────────────────────────────────────────
+
+function Waveform({ active }: { active: boolean }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 3, height: 28 }}>
+      {Array.from({ length: 12 }).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            width: 3,
+            height: active ? `${20 + Math.random() * 60}%` : '25%',
+            background: active ? 'rgba(139,92,246,0.8)' : 'rgba(255,255,255,0.15)',
+            borderRadius: 99,
+            transition: active ? `height ${0.1 + i * 0.05}s ease-in-out` : 'height 0.3s',
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+// ── Entry card ───────────────────────────────────────────────────────────────
+
+function EntryCard({ entry, onDelete }: { entry: JournalEntry; onDelete: (id: string) => void }) {
+  const [expanded, setExpanded] = useState(false)
+  const color = MOOD_COLORS[entry.mood] ?? '#94a3b8'
+  const date = new Date(entry.date)
+  const dateStr = date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+  const timeStr = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+
+  return (
+    <div
+      style={{
+        borderRadius: 16,
+        border: '1px solid rgba(255,255,255,0.07)',
+        background: 'rgba(255,255,255,0.025)',
+        overflow: 'hidden',
+        transition: 'border-color 0.2s',
+      }}
+    >
+      {/* Card header — always visible */}
+      <button
+        onClick={() => setExpanded(e => !e)}
+        style={{
+          width: '100%', textAlign: 'left', padding: '14px 16px',
+          display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer',
+          background: 'transparent', border: 'none',
+        }}
+      >
+        {/* Mood emoji circle */}
+        <div style={{
+          width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 20, background: `${color}18`, border: `1px solid ${color}35`,
+        }}>
+          {entry.moodEmoji}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#f4f4f5' }}>{dateStr}</span>
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>{timeStr}</span>
+            <span style={{
+              fontSize: 9, fontWeight: 800, padding: '1px 6px', borderRadius: 99,
+              background: `${color}18`, color, border: `1px solid ${color}30`,
+              marginLeft: 'auto',
+            }}>
+              {entry.mood}
+            </span>
+          </div>
+          <p style={{
+            fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.4,
+            overflow: 'hidden', display: '-webkit-box',
+            WebkitLineClamp: expanded ? 999 : 1,
+            WebkitBoxOrient: 'vertical',
+          }}>
+            {entry.summary}
+          </p>
+        </div>
+
+        <span style={{
+          fontSize: 14, color: 'rgba(255,255,255,0.25)',
+          transform: expanded ? 'rotate(90deg)' : 'none',
+          transition: 'transform 0.2s',
+          flexShrink: 0,
+        }}>›</span>
+      </button>
+
+      {/* Expanded detail */}
+      {expanded && (
+        <div style={{ padding: '0 16px 16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+
+          {/* Tags */}
+          {entry.tags.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 12, marginBottom: 12 }}>
+              {entry.tags.map(tag => (
+                <span key={tag} style={{
+                  fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 99,
+                  background: 'rgba(139,92,246,0.12)', color: '#a78bfa',
+                  border: '1px solid rgba(139,92,246,0.25)',
+                }}>#{tag}</span>
+              ))}
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto' }}>
+                {entry.wordCount}w · {entry.duration}s
+              </span>
+            </div>
+          )}
+
+          {/* Insights */}
+          {entry.insights.length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                Insights
+              </p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {entry.insights.map((ins, i) => (
+                  <li key={i} style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', paddingLeft: 16, position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: 0, color: '#a78bfa' }}>·</span>
+                    {ins}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Affirmation */}
+          {entry.affirmation && (
+            <div style={{
+              padding: '10px 12px', borderRadius: 10, marginBottom: 10,
+              background: 'rgba(139,92,246,0.07)', border: '1px solid rgba(139,92,246,0.2)',
+            }}>
+              <p style={{ fontSize: 11, color: '#c4b5fd', fontStyle: 'italic', lineHeight: 1.5 }}>
+                ✨ {entry.affirmation}
+              </p>
+            </div>
+          )}
+
+          {/* Transcript toggle */}
+          <details style={{ marginBottom: 8 }}>
+            <summary style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', cursor: 'pointer', userSelect: 'none' }}>
+              Show transcript
+            </summary>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, marginTop: 6 }}>
+              {entry.transcript}
+            </p>
+          </details>
+
+          {/* Delete */}
+          <button
+            onClick={() => onDelete(entry.id)}
+            style={{
+              fontSize: 10, color: 'rgba(255,255,255,0.2)', background: 'none',
+              border: 'none', cursor: 'pointer', padding: 0,
+            }}
+          >
+            Delete entry
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Main component ───────────────────────────────────────────────────────────
+
+export default function VoiceJournal() {
+  const [entries, setEntries]       = useState<JournalEntry[]>([])
   const [listening, setListening]   = useState(false)
   const [transcript, setTranscript] = useState('')
-  const [history, setHistory]       = useState<CommandEntry[]>([])
   const [processing, setProcessing] = useState(false)
-  const [haConfigured, setHaConfigured] = useState(false)
-  const [status, setStatus]         = useState('')
+  const [result, setResult]         = useState<AIResult | null>(null)
+  const [error, setError]           = useState('')
+  const [duration, setDuration]     = useState(0)
+  const [view, setView]             = useState<'record' | 'history'>('record')
+  const [waveKey, setWaveKey]       = useState(0) // force re-render for waveform animation
 
-  const recognitionRef = useRef<AnySpeechRecognition>(null)
-  const audioRef       = useRef<HTMLAudioElement | null>(null)
+  const recognitionRef = useRef<unknown>(null)
+  const timerRef       = useRef<ReturnType<typeof setInterval> | null>(null)
+  const startTimeRef   = useRef<number>(0)
 
   useEffect(() => {
-    setHaConfigured(false) // Default mock mode
+    setEntries(loadEntries())
   }, [])
 
-  function startListening() {
+  const stopTimer = useCallback(() => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+    setDuration(prev => {
+      if (startTimeRef.current) {
+        return Math.floor((Date.now() - startTimeRef.current) / 1000)
+      }
+      return prev
+    })
+  }, [])
+
+  const startListening = useCallback(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SR) {
-      setStatus('Speech recognition not supported in this browser. Use Chrome.')
+      setError('Speech recognition requires Chrome or Edge. Or type your entry below.')
       return
     }
 
     const rec = new SR()
-    rec.continuous = false
+    rec.continuous = true
     rec.interimResults = true
     rec.lang = 'en-US'
 
+    let finalText = ''
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onresult = (e: any) => {
-      const t = Array.from(e.results as ArrayLike<{ 0: { transcript: string } }>)
-        .map(r => r[0].transcript).join('')
-      setTranscript(t)
+      let interim = ''
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          finalText += e.results[i][0].transcript + ' '
+        } else {
+          interim += e.results[i][0].transcript
+        }
+      }
+      setTranscript((finalText + interim).trim())
+      setWaveKey(k => k + 1) // re-trigger waveform
     }
 
-    rec.onend = () => {
-      setListening(false)
-      if (transcript.trim()) processCommand(transcript)
-    }
-
-    rec.onerror = () => setListening(false)
+    rec.onerror = () => { setListening(false); stopTimer() }
+    rec.onend   = () => { setListening(false); stopTimer() }
 
     recognitionRef.current = rec
     rec.start()
     setListening(true)
     setTranscript('')
-  }
+    setResult(null)
+    setError('')
+    startTimeRef.current = Date.now()
+    setDuration(0)
+    timerRef.current = setInterval(() => setDuration(Math.floor((Date.now() - startTimeRef.current) / 1000)), 1000)
+  }, [stopTimer])
 
-  function stopListening() {
-    recognitionRef.current?.stop()
+  const stopListening = useCallback(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(recognitionRef.current as any)?.stop()
     setListening(false)
-  }
+    stopTimer()
+  }, [stopTimer])
 
-  async function processCommand(text: string) {
+  const analyseEntry = useCallback(async (text: string) => {
+    if (!text.trim()) return
     setProcessing(true)
-    setStatus('Understanding command...')
+    setError('')
     try {
-      // 1. Interpret command
-      const interpretRes = await fetch('/api/voice/interpret', {
+      const res = await fetch('/api/voice/journal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transcript: text }),
       })
-      const command = await interpretRes.json()
-
-      // 2. Execute on Home Assistant (or mock)
-      setStatus('Executing...')
-      const controlRes = await fetch('/api/home/control', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(command),
-      })
-      const result = await controlRes.json()
-
-      // 3. Speak response
-      setStatus('Speaking...')
-      const speakRes = await fetch('/api/voice/speak', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: command.response }),
-      })
-
-      if (speakRes.ok) {
-        const blob = await speakRes.blob()
-        const url  = URL.createObjectURL(blob)
-        if (!audioRef.current) audioRef.current = new Audio()
-        audioRef.current.src = url
-        audioRef.current.play()
-      }
-
-      setHistory(prev => [{
-        transcript: text,
-        response:   command.response,
-        action:     command.action,
-        device:     command.friendlyName,
-        mock:       result.mock ?? true,
-        timestamp:  new Date(),
-      }, ...prev.slice(0, 9)])
-
-      setStatus('')
+      const json = await res.json()
+      if (!res.ok) { setError(json.error ?? 'Analysis failed'); return }
+      setResult(json)
     } catch {
-      setStatus('Error processing command')
+      setError('Network error — check connection and try again')
     } finally {
       setProcessing(false)
     }
-  }
+  }, [])
+
+  const saveEntry = useCallback(() => {
+    if (!result || !transcript) return
+    const entry: JournalEntry = {
+      id:          Date.now().toString(),
+      date:        new Date().toISOString(),
+      transcript,
+      duration,
+      ...result,
+    }
+    const updated = [entry, ...entries]
+    setEntries(updated)
+    saveEntries(updated)
+    setTranscript('')
+    setResult(null)
+    setDuration(0)
+    setView('history')
+  }, [result, transcript, entries, duration])
+
+  const deleteEntry = useCallback((id: string) => {
+    const updated = entries.filter(e => e.id !== id)
+    setEntries(updated)
+    saveEntries(updated)
+  }, [entries])
+
+  const moodColor = result ? (MOOD_COLORS[result.mood] ?? '#94a3b8') : '#8b5cf6'
+
+  // Mood distribution for history view
+  const moodCounts = entries.reduce<Record<string, number>>((acc, e) => {
+    acc[e.mood] = (acc[e.mood] ?? 0) + 1
+    return acc
+  }, {})
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <header className="border-b border-gray-800 px-6 py-4">
-        <h1 className="text-xl font-bold text-green-400">AI Voice Home</h1>
-        <p className="text-xs text-gray-500">Control your smart home with voice commands</p>
-        {!haConfigured && (
-          <p className="text-xs text-yellow-500 mt-1">Demo mode — set HA_URL + HA_TOKEN env vars to connect real devices</p>
-        )}
-      </header>
+    <div style={{ maxWidth: 640, margin: '0 auto', padding: '24px 16px 80px' }}>
 
-      <main className="max-w-5xl mx-auto px-6 py-10 grid md:grid-cols-3 gap-8">
-        {/* Left: Voice + History */}
-        <div className="md:col-span-2 space-y-6">
-          {/* Voice Button */}
-          <div className="flex flex-col items-center gap-4 py-8">
+      {/* Header */}
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 900, color: '#f4f4f5', letterSpacing: '-0.02em', margin: 0 }}>
+          🎙 VoiceJournal
+        </h1>
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>
+          Speak your thoughts. AI reflects them back.
+        </p>
+      </div>
+
+      {/* Tab bar */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
+        {(['record', 'history'] as const).map(v => (
+          <button
+            key={v}
+            onClick={() => setView(v)}
+            style={{
+              padding: '7px 18px', borderRadius: 99, fontSize: 12, fontWeight: 700,
+              border: view === v ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(255,255,255,0.08)',
+              background: view === v ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.03)',
+              color: view === v ? '#c4b5fd' : 'rgba(255,255,255,0.4)',
+              cursor: 'pointer',
+            }}
+          >
+            {v === 'record' ? '🎙 Record' : `📓 Journal (${entries.length})`}
+          </button>
+        ))}
+      </div>
+
+      {/* ── RECORD VIEW ── */}
+      {view === 'record' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* Big record button */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '32px 0' }}>
             <button
-              onMouseDown={startListening}
-              onMouseUp={stopListening}
-              onTouchStart={startListening}
-              onTouchEnd={stopListening}
+              onClick={listening ? stopListening : startListening}
               disabled={processing}
-              className={`w-28 h-28 rounded-full flex items-center justify-center transition-all text-4xl shadow-lg ${
-                listening
-                  ? 'bg-red-600 shadow-red-500/30 scale-110 animate-pulse'
+              className={listening ? 'recording-pulse' : ''}
+              style={{
+                width: 96, height: 96, borderRadius: '50%',
+                border: 'none', cursor: processing ? 'wait' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 36,
+                background: listening
+                  ? 'linear-gradient(135deg, #7c3aed, #8b5cf6)'
                   : processing
-                    ? 'bg-gray-700 cursor-wait'
-                    : 'bg-green-600 hover:bg-green-500 shadow-green-500/20 hover:scale-105'
-              }`}
+                    ? 'rgba(255,255,255,0.06)'
+                    : 'linear-gradient(135deg, #4c1d95, #7c3aed)',
+                boxShadow: listening ? '0 0 32px rgba(139,92,246,0.4)' : '0 4px 24px rgba(139,92,246,0.2)',
+                transition: 'all 0.2s',
+              }}
             >
-              {listening ? '🎙' : processing ? '⏳' : '🎤'}
+              {processing ? '⏳' : listening ? '⏹' : '🎙'}
             </button>
-            <p className="text-sm text-gray-400">
-              {listening ? 'Listening...' : processing ? status : 'Hold to speak'}
-            </p>
-            {transcript && (
-              <p className="text-sm text-white bg-gray-900 rounded-xl px-4 py-2 max-w-sm text-center">
-                &ldquo;{transcript}&rdquo;
+
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: listening ? '#c4b5fd' : 'rgba(255,255,255,0.5)', margin: 0 }}>
+                {listening ? `Recording… ${duration}s` : processing ? 'Analysing…' : 'Tap to record'}
               </p>
-            )}
-          </div>
-
-          {/* Example Commands */}
-          <div>
-            <p className="text-xs text-gray-600 mb-3 uppercase tracking-wider">Try saying...</p>
-            <div className="flex flex-wrap gap-2">
-              {[
-                'Turn on living room lights',
-                'Set thermostat to 72 degrees',
-                'Lock the front door',
-                'Turn off bedroom lights',
-                'What\'s the temperature?',
-              ].map(cmd => (
-                <button
-                  key={cmd}
-                  onClick={() => !processing && processCommand(cmd)}
-                  className="text-xs border border-gray-800 hover:border-green-700 text-gray-400 hover:text-white px-3 py-1.5 rounded-full transition-colors"
-                >
-                  {cmd}
-                </button>
-              ))}
+              {listening && (
+                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: 4 }}>
+                  Tap again to stop
+                </p>
+              )}
             </div>
+
+            <Waveform key={waveKey} active={listening} />
           </div>
 
-          {/* History */}
-          {history.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Command History</h2>
-              {history.map((h, i) => (
-                <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">&ldquo;{h.transcript}&rdquo;</p>
-                    {h.mock && <span className="text-xs text-yellow-600 bg-yellow-900/20 px-2 py-0.5 rounded-full">Demo</span>}
+          {/* Live transcript */}
+          {transcript && (
+            <div style={{
+              padding: '14px 16px', borderRadius: 14,
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}>
+              <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+                Transcript
+              </p>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, margin: 0 }}>
+                {transcript}
+              </p>
+            </div>
+          )}
+
+          {/* Manual text input fallback */}
+          {!listening && !transcript && !result && (
+            <div>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginBottom: 6 }}>Or type your entry:</p>
+              <textarea
+                placeholder="What's on your mind today?"
+                onChange={e => setTranscript(e.target.value)}
+                style={{
+                  width: '100%', minHeight: 100, padding: '12px 14px',
+                  borderRadius: 12, fontSize: 13, lineHeight: 1.6,
+                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+                  color: '#f4f4f5', outline: 'none', resize: 'vertical',
+                }}
+              />
+            </div>
+          )}
+
+          {error && (
+            <p style={{ fontSize: 12, color: '#f87171', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', padding: '10px 14px', borderRadius: 10 }}>
+              {error}
+            </p>
+          )}
+
+          {/* Analyse button */}
+          {transcript && !listening && !result && (
+            <button
+              onClick={() => analyseEntry(transcript)}
+              disabled={processing}
+              style={{
+                width: '100%', padding: '13px', borderRadius: 14, fontSize: 14, fontWeight: 800,
+                border: 'none', cursor: processing ? 'wait' : 'pointer',
+                background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                color: '#fff', boxShadow: '0 4px 20px rgba(124,58,237,0.3)',
+              }}
+            >
+              {processing ? 'Analysing…' : '✨ Analyse my entry'}
+            </button>
+          )}
+
+          {/* AI result */}
+          {result && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+              {/* Mood + summary */}
+              <div style={{
+                padding: '16px', borderRadius: 16,
+                background: `${moodColor}10`, border: `1px solid ${moodColor}30`,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <span style={{ fontSize: 28 }}>{result.moodEmoji}</span>
+                  <div>
+                    <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', margin: 0 }}>Mood detected</p>
+                    <p style={{ fontSize: 16, fontWeight: 900, color: moodColor, margin: 0 }}>{result.mood}</p>
                   </div>
-                  <p className="text-xs text-gray-400">{h.response}</p>
-                  <p className="text-xs text-gray-600">{h.device} · {h.timestamp.toLocaleTimeString()}</p>
+                  <span style={{ marginLeft: 'auto', fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>
+                    {result.wordCount} words
+                  </span>
                 </div>
-              ))}
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, margin: 0 }}>
+                  {result.summary}
+                </p>
+              </div>
+
+              {/* Insights */}
+              <div style={{ padding: '14px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                  Insights
+                </p>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {result.insights.map((ins, i) => (
+                    <li key={i} style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', paddingLeft: 18, position: 'relative', lineHeight: 1.5 }}>
+                      <span style={{ position: 'absolute', left: 0, color: '#a78bfa', fontWeight: 900 }}>·</span>
+                      {ins}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Tags */}
+              {result.tags.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {result.tags.map(tag => (
+                    <span key={tag} style={{
+                      fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 99,
+                      background: 'rgba(139,92,246,0.12)', color: '#a78bfa',
+                      border: '1px solid rgba(139,92,246,0.25)',
+                    }}>#{tag}</span>
+                  ))}
+                </div>
+              )}
+
+              {/* Affirmation */}
+              <div style={{ padding: '12px 14px', borderRadius: 12, background: 'rgba(139,92,246,0.07)', border: '1px solid rgba(139,92,246,0.2)' }}>
+                <p style={{ fontSize: 12, color: '#c4b5fd', fontStyle: 'italic', lineHeight: 1.6, margin: 0 }}>
+                  ✨ {result.affirmation}
+                </p>
+              </div>
+
+              {/* Save / discard */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={saveEntry}
+                  style={{
+                    flex: 1, padding: '12px', borderRadius: 12, fontSize: 13, fontWeight: 800,
+                    border: 'none', cursor: 'pointer',
+                    background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                    color: '#fff',
+                  }}
+                >
+                  Save to journal
+                </button>
+                <button
+                  onClick={() => { setResult(null); setTranscript('') }}
+                  style={{
+                    padding: '12px 18px', borderRadius: 12, fontSize: 13, fontWeight: 600,
+                    border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer',
+                    background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.4)',
+                  }}
+                >
+                  Discard
+                </button>
+              </div>
             </div>
           )}
         </div>
+      )}
 
-        {/* Right: Affiliate Products */}
-        <div className="space-y-4">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Recommended Devices</h2>
-          {AFFILIATE_PRODUCTS.map(p => (
-            <a
-              key={p.name}
-              href={p.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block bg-gray-900 border border-gray-800 hover:border-green-700 rounded-xl p-4 transition-colors group"
-            >
-              <span className="text-xs text-green-600 bg-green-900/20 px-2 py-0.5 rounded-full">{p.tag}</span>
-              <p className="text-sm font-medium mt-2 group-hover:text-green-400 transition-colors">{p.name}</p>
-              <p className="text-green-400 font-bold mt-1">{p.price}</p>
-              <p className="text-xs text-gray-600 mt-1">View on Amazon →</p>
-            </a>
-          ))}
-          <p className="text-xs text-gray-700">Affiliate links — we earn a small commission at no cost to you.</p>
+      {/* ── HISTORY VIEW ── */}
+      {view === 'history' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+          {entries.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+              <p style={{ fontSize: 40, marginBottom: 12 }}>📓</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>No entries yet</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>Record your first voice note to get started</p>
+              <button
+                onClick={() => setView('record')}
+                style={{
+                  marginTop: 20, padding: '10px 24px', borderRadius: 99, fontSize: 13, fontWeight: 700,
+                  border: 'none', cursor: 'pointer',
+                  background: 'rgba(139,92,246,0.15)', color: '#c4b5fd',
+                  border2: '1px solid rgba(139,92,246,0.3)',
+                } as React.CSSProperties}
+              >
+                Record now →
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Mood summary strip */}
+              <div style={{
+                display: 'flex', flexWrap: 'wrap', gap: 6, padding: '12px 14px',
+                borderRadius: 14, background: 'rgba(255,255,255,0.025)',
+                border: '1px solid rgba(255,255,255,0.07)', marginBottom: 4,
+              }}>
+                {Object.entries(moodCounts).sort((a, b) => b[1] - a[1]).map(([mood, count]) => (
+                  <span key={mood} style={{
+                    fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99,
+                    background: `${MOOD_COLORS[mood] ?? '#94a3b8'}18`,
+                    color: MOOD_COLORS[mood] ?? '#94a3b8',
+                    border: `1px solid ${MOOD_COLORS[mood] ?? '#94a3b8'}30`,
+                  }}>
+                    {mood} ×{count}
+                  </span>
+                ))}
+              </div>
+
+              {entries.map(entry => (
+                <EntryCard key={entry.id} entry={entry} onDelete={deleteEntry} />
+              ))}
+            </>
+          )}
         </div>
-      </main>
+      )}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 'use client'
+import { motion } from 'framer-motion'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 
@@ -61,6 +62,21 @@ function saveEntries(entries: JournalEntry[]) {
 function Waveform({ active }: { active: boolean }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 3, height: 28 }}>
+{/* Animated blob bg */}
+      <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }} aria-hidden>
+        <motion.div
+          style={{ position: 'absolute', top: '-15%', left: '-8%', width: 600, height: 600, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(14,165,233,0.16) 0%, transparent 70%)', filter: 'blur(80px)' }}
+          animate={{ x: [0, 40, 0], y: [0, -20, 0], scale: [1, 1.08, 1] }}
+          transition={{ duration: 14, ease: 'easeInOut', repeat: Infinity }}
+        />
+        <motion.div
+          style={{ position: 'absolute', bottom: '-10%', right: '-6%', width: 500, height: 500, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(2,132,199,0.10) 0%, transparent 70%)', filter: 'blur(90px)' }}
+          animate={{ x: [0, -25, 0], y: [0, 20, 0], scale: [1, 1.06, 1] }}
+          transition={{ duration: 18, ease: 'easeInOut', repeat: Infinity, delay: 2 }}
+        />
+      </div>
       {Array.from({ length: 12 }).map((_, i) => (
         <div
           key={i}

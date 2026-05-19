@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import FloatingChatWrapper from '@/components/FloatingChatWrapper'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="h-full">
       <body className={`${inter.className} min-h-full antialiased`} style={{ background: '#07010f', color: '#f4f4f5' }}>
         {children}
+        <FloatingChatWrapper />
       </body>
     </html>
   )

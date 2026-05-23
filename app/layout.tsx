@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import FloatingChatWrapper from '@/components/FloatingChatWrapper'
 import Script from 'next/script'
+import BackToTop from '@/components/BackToTop'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.className} min-h-full antialiased`} style={{ background: '#07010f', color: '#f4f4f5' }}>
         {children}
         <FloatingChatWrapper />
+        <BackToTop accentColor="#8b5cf6" />
       </body>
     </html>
   )

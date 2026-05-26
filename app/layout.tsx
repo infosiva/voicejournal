@@ -60,6 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <FloatingChatWrapper />
         <BackToTop accentColor="#8b5cf6" />
+        <Script defer data-site="ai-voice-home.vercel.app" src="http://31.97.56.148:3098/t.js" strategy="afterInteractive" />
       </body>
     </html>
   )

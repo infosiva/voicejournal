@@ -10,8 +10,8 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://ai-voice-home.vercel.app'),
-  title: 'VoiceJournal — AI Voice Diary & Mood Tracking',
-  description: 'Record your thoughts by voice. AI transcribes, analyzes your mood, and surfaces personal insights from daily reflections. Free AI voice journaling.',
+  title: 'VoiceJournal — Speak Your Thoughts, AI Reflects Them Back',
+  description: 'Speak your thoughts — AI transcribes, finds your mood patterns, and surfaces personal insights from your own words. Voice-native journaling, free.',
   keywords: ['voice journal', 'AI diary', 'mood tracking', 'voice notes', 'reflection', 'journaling app'],
   openGraph: {
     title: 'VoiceJournal — AI Voice Diary & Mood Tracking',

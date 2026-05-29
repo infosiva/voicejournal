@@ -205,7 +205,7 @@ export default function FloatingChatWrapper() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && send()}
-                placeholder="Ask about voice journaling..."
+                placeholder="Speak your thoughts or ask me anything..."
                 style={{
                   flex: 1,
                   background: 'rgba(255,255,255,0.06)',

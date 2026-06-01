@@ -229,22 +229,70 @@ function EntryCard({ entry, onDelete }: { entry: JournalEntry; onDelete: (id: st
   )
 }
 
+// ── Shared demo mood data ─────────────────────────────────────────────────────
+
+const DEMO_MOODS = [
+  { emoji: '😊', mood: 'Happy', color: '#fbbf24', summary: 'Feeling energised after a productive morning session.' },
+  { emoji: '🤔', mood: 'Reflective', color: '#a78bfa', summary: 'Thinking through the week — lots to process and learn.' },
+  { emoji: '🙏', mood: 'Grateful', color: '#34d399', summary: 'Small wins added up today. Grateful for the momentum.' },
+]
+
+// ── Mobile demo strip (shown only on mobile, replaces hidden DemoPanel) ───────
+
+function MobileDemoStrip() {
+  return (
+    <div
+      style={{
+        overflowX: 'auto',
+        scrollSnapType: 'x mandatory',
+        display: 'flex',
+        gap: 10,
+        paddingBottom: 4,
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'none',
+      }}
+    >
+      {DEMO_MOODS.map((d, i) => (
+        <motion.div
+          key={d.mood}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 + i * 0.08, duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+          className="glass"
+          style={{
+            flexShrink: 0,
+            scrollSnapAlign: 'start',
+            width: 160,
+            borderRadius: 14,
+            padding: '12px 14px',
+            border: `1px solid ${d.color}25`,
+            background: `${d.color}08`,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <span style={{ fontSize: 20 }}>{d.emoji}</span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: d.color }}>{d.mood}</span>
+          </div>
+          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, margin: 0 }}>
+            {d.summary}
+          </p>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
 // ── Demo panel (right side on desktop) ───────────────────────────────────────
 
 function DemoPanel() {
-  const demoMoods = [
-    { emoji: '😊', mood: 'Happy', color: '#fbbf24', summary: 'Feeling energised after a productive morning session.' },
-    { emoji: '🤔', mood: 'Reflective', color: '#a78bfa', summary: 'Thinking through the week — lots to process and learn.' },
-    { emoji: '🙏', mood: 'Grateful', color: '#34d399', summary: 'Small wins added up today. Grateful for the momentum.' },
-  ]
   const [activeIdx, setActiveIdx] = useState(0)
 
   useEffect(() => {
-    const t = setInterval(() => setActiveIdx(i => (i + 1) % demoMoods.length), 2800)
+    const t = setInterval(() => setActiveIdx(i => (i + 1) % DEMO_MOODS.length), 2800)
     return () => clearInterval(t)
   }, [])
 
-  const d = demoMoods[activeIdx]
+  const d = DEMO_MOODS[activeIdx]
 
   return (
     <div style={{ position: 'relative' }}>
@@ -327,7 +375,7 @@ function DemoPanel() {
 
         {/* Mood dots */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 16 }}>
-          {demoMoods.map((m, i) => (
+          {DEMO_MOODS.map((m, i) => (
             <div
               key={i}
               style={{
@@ -339,6 +387,140 @@ function DemoPanel() {
             />
           ))}
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Mood Wave ─────────────────────────────────────────────────────────────────
+
+const MOOD_SCORE: Record<string, number> = {
+  Happy:      90,
+  Excited:    88,
+  Motivated:  82,
+  Grateful:   78,
+  Neutral:    50,
+  Reflective: 55,
+  Tired:      35,
+  Anxious:    28,
+  Frustrated: 22,
+  Sad:        18,
+}
+
+function MoodWave({ entries }: { entries: { mood: string; date: string }[] }) {
+  // Build last 7 days of mood scores (most recent 7 entries or placeholders)
+  const PLACEHOLDER_HEIGHTS = [45, 65, 38, 72, 55, 80, 60]
+  const last7 = entries.slice(0, 7).reverse()
+
+  const dots: { score: number; mood: string; date: string; isReal: boolean }[] = []
+  for (let i = 0; i < 7; i++) {
+    if (i < last7.length) {
+      const e = last7[i]
+      dots.push({ score: MOOD_SCORE[e.mood] ?? 50, mood: e.mood, date: e.date, isReal: true })
+    } else {
+      dots.push({ score: PLACEHOLDER_HEIGHTS[i], mood: '', date: '', isReal: false })
+    }
+  }
+
+  const W = 260, H = 56
+  const pad = 16
+  const xStep = (W - pad * 2) / 6
+
+  // Build SVG polyline points
+  const pts = dots.map((d, i) => {
+    const x = pad + i * xStep
+    const y = H - pad - ((d.score / 100) * (H - pad * 2))
+    return `${x},${y}`
+  }).join(' ')
+
+  return (
+    <div style={{ margin: '20px 0 4px' }}>
+      <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+        7-day mood
+      </p>
+      <div style={{ position: 'relative', width: W, maxWidth: '100%' }}>
+        <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block', overflow: 'visible' }}>
+          {/* Gradient fill */}
+          <defs>
+            <linearGradient id="moodGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          {/* Fill area */}
+          <polyline
+            points={`${pad},${H - pad} ${pts} ${pad + 6 * xStep},${H - pad}`}
+            fill="url(#moodGrad)"
+            stroke="none"
+          />
+          {/* Line */}
+          <polyline
+            points={pts}
+            fill="none"
+            stroke="#8b5cf6"
+            strokeWidth="2"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            strokeDasharray={dots.every(d => !d.isReal) ? '4 4' : 'none'}
+            opacity={dots.every(d => !d.isReal) ? 0.4 : 0.85}
+          />
+          {/* Dots */}
+          {dots.map((d, i) => {
+            const x = pad + i * xStep
+            const y = H - pad - ((d.score / 100) * (H - pad * 2))
+            const color = d.isReal ? (MOOD_COLORS[d.mood] ?? '#8b5cf6') : 'rgba(255,255,255,0.15)'
+            return (
+              <circle
+                key={i}
+                cx={x}
+                cy={y}
+                r={d.isReal ? 4 : 3}
+                fill={color}
+                stroke={d.isReal ? 'rgba(0,0,0,0.3)' : 'none'}
+                strokeWidth="1.5"
+                opacity={d.isReal ? 1 : 0.4}
+              />
+            )
+          })}
+        </svg>
+        {/* Day labels */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: pad - 6, paddingRight: pad - 6, marginTop: 4 }}>
+          {dots.map((d, i) => (
+            <span key={i} style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', width: 24, textAlign: 'center' }}>
+              {d.isReal
+                ? new Date(d.date).toLocaleDateString('en-GB', { weekday: 'short' }).slice(0, 2)
+                : ['Mo','Tu','We','Th','Fr','Sa','Su'][i]
+              }
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Weekly Insight Card ───────────────────────────────────────────────────────
+
+function WeeklyInsightCard({ insight }: { insight: string }) {
+  return (
+    <div style={{
+      padding: '12px 14px',
+      borderRadius: 12,
+      background: 'rgba(139,92,246,0.07)',
+      border: '1px solid rgba(139,92,246,0.2)',
+      marginTop: 20,
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: 10,
+    }}>
+      <span style={{ fontSize: 16, flexShrink: 0 }}>📊</span>
+      <div>
+        <p style={{ fontSize: 10, fontWeight: 700, color: '#a78bfa', margin: '0 0 3px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          This week&apos;s insight
+        </p>
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.5, margin: 0 }}>
+          {insight}
+        </p>
       </div>
     </div>
   )
@@ -459,6 +641,19 @@ export default function VoiceJournal() {
     return acc
   }, {})
 
+  // Weekly insight — rotates based on week number
+  const WEEKLY_INSIGHTS = [
+    'Journaling for 2+ minutes captures 3x more insight than quick notes.',
+    'Most mood patterns emerge after just 5 entries — keep going!',
+    'Voice journaling activates emotional processing 40% faster than typing.',
+    'People who review weekly insights report 25% improved self-awareness.',
+    'Your mood vocabulary grows with every entry you record.',
+    'Consistent journaling for 30 days creates lasting self-reflection habits.',
+    'Naming emotions reduces their intensity — science agrees.',
+  ]
+  const weekNum = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000))
+  const weeklyInsight = WEEKLY_INSIGHTS[weekNum % WEEKLY_INSIGHTS.length]
+
   // ── Hero / landing (before user starts) ────────────────────────────────────
   if (!appStarted) {
     return (
@@ -469,7 +664,7 @@ export default function VoiceJournal() {
           flex: 1,
           maxWidth: 1100,
           margin: '0 auto',
-          padding: '48px 24px 40px',
+          padding: '32px 20px 32px',
           display: 'grid',
           gridTemplateColumns: 'minmax(0,1fr)',
           gap: 40,
@@ -478,8 +673,11 @@ export default function VoiceJournal() {
           className="hero-grid"
         >
           <style>{`
+            .demo-panel-desktop { display: none; }
             @media (min-width: 1024px) {
               .hero-grid { grid-template-columns: 1fr 1fr !important; }
+              .demo-strip-mobile { display: none !important; }
+              .demo-panel-desktop { display: block !important; }
             }
           `}</style>
 
@@ -500,22 +698,27 @@ export default function VoiceJournal() {
             </div>
 
             <h1 style={{
-              fontSize: 'clamp(32px, 5vw, 52px)',
+              fontSize: 'clamp(28px, 4.5vw, 48px)',
               fontWeight: 900,
               letterSpacing: '-0.03em',
-              lineHeight: 1.1,
+              lineHeight: 1.15,
               color: '#f4f4f5',
               margin: '0 0 16px',
             }}>
-              Speak your mind.<br />
-              <span style={{ color: '#8b5cf6' }}>AI reflects it</span> back.
+              Speak for 2 minutes.<br />
+              <span style={{ color: '#8b5cf6' }}>Your AI journal writes itself,</span> tracks your mood, and spots what&apos;s changing.
             </h1>
 
+            {/* Mobile demo strip — between headline and paragraph, above fold */}
+            <div className="demo-strip-mobile" style={{ marginBottom: 20 }}>
+              <MobileDemoStrip />
+            </div>
+
             <p style={{
-              fontSize: 16,
+              fontSize: 15,
               color: 'rgba(255,255,255,0.5)',
-              lineHeight: 1.7,
-              margin: '0 0 32px',
+              lineHeight: 1.65,
+              margin: '0 0 24px',
               maxWidth: 440,
             }}>
               Record voice notes, get AI mood analysis, personal insights, and daily affirmations — all stored privately in your browser.
@@ -554,8 +757,9 @@ export default function VoiceJournal() {
             </div>
           </motion.div>
 
-          {/* Right — animated demo */}
+          {/* Right — animated demo (desktop only) */}
           <motion.div
+            className="demo-panel-desktop"
             initial={{ opacity: 0, x: 24 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.55, delay: 0.1, ease: [0.23, 1, 0.32, 1] }}
@@ -564,7 +768,7 @@ export default function VoiceJournal() {
           </motion.div>
         </section>
 
-        {/* Steps row */}
+        {/* Steps row — 4-col on all viewports */}
         <section style={{
           maxWidth: 1100, margin: '0 auto',
           padding: '0 24px 64px',
@@ -572,12 +776,9 @@ export default function VoiceJournal() {
         }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 12,
-          }}
-            className="steps-grid"
-          >
-            <style>{`@media (min-width: 640px) { .steps-grid { grid-template-columns: repeat(4, 1fr) !important; } }`}</style>
+            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+            gap: 10,
+          }}>
             {STEPS.map((s, i) => (
               <motion.div
                 key={s.n}
@@ -585,12 +786,12 @@ export default function VoiceJournal() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.08, duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
                 className="glass"
-                style={{ borderRadius: 16, padding: '16px 14px', textAlign: 'center' }}
+                style={{ borderRadius: 14, padding: '14px 10px', textAlign: 'center' }}
               >
-                <div className="step-badge" style={{ margin: '0 auto 10px' }}>{s.n}</div>
-                <div style={{ fontSize: 22, marginBottom: 6 }}>{s.icon}</div>
-                <p style={{ fontSize: 12, fontWeight: 800, color: '#f4f4f5', margin: '0 0 3px' }}>{s.label}</p>
-                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0 }}>{s.desc}</p>
+                <div className="step-badge" style={{ margin: '0 auto 8px' }}>{s.n}</div>
+                <div style={{ fontSize: 18, marginBottom: 5 }}>{s.icon}</div>
+                <p style={{ fontSize: 10, fontWeight: 800, color: '#f4f4f5', margin: '0 0 2px' }}>{s.label}</p>
+                <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: 0, lineHeight: 1.4 }}>{s.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -852,6 +1053,12 @@ export default function VoiceJournal() {
               </div>
             ) : (
               <>
+                {/* 7-day mood wave */}
+                <div className="glass" style={{ borderRadius: 16, padding: '16px 18px', marginBottom: 4 }}>
+                  <MoodWave entries={entries} />
+                  <WeeklyInsightCard insight={weeklyInsight} />
+                </div>
+
                 {/* Mood strip */}
                 <div className="glass" style={{
                   display: 'flex', flexWrap: 'wrap', gap: 6,

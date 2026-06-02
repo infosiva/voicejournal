@@ -689,24 +689,32 @@ export default function VoiceJournal() {
           >
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '4px 12px', borderRadius: 99, marginBottom: 20,
-              background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)',
+              padding: '6px 16px', borderRadius: 9999, marginBottom: 24,
+              background: 'rgba(255,255,255,0.04)',
+              backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.09)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.07)',
+              fontSize: 11, color: 'rgba(196,181,253,0.82)', fontWeight: 700,
+              letterSpacing: '0.11em', textTransform: 'uppercase',
             }}>
-              <span style={{ fontSize: 11, color: '#a78bfa', fontWeight: 700, letterSpacing: '0.04em' }}>
-                ✦ FREE AI JOURNALING
-              </span>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#a78bfa', display: 'inline-block', flexShrink: 0, boxShadow: '0 0 8px #a78bfa' }} />
+              FREE AI JOURNALING
             </div>
 
             <h1 style={{
-              fontSize: 'clamp(28px, 4.5vw, 48px)',
+              fontSize: 'clamp(2rem, 4.5vw, 3.25rem)',
               fontWeight: 900,
-              letterSpacing: '-0.03em',
-              lineHeight: 1.15,
+              letterSpacing: '-0.04em',
+              lineHeight: 0.97,
               color: '#f4f4f5',
-              margin: '0 0 16px',
+              margin: '0 0 18px',
             }}>
               Speak for 2 minutes.<br />
-              <span style={{ color: '#8b5cf6' }}>Your AI journal writes itself,</span> tracks your mood, and spots what&apos;s changing.
+              <span style={{
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #a78bfa 50%, #c4b5fd 100%)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                filter: 'drop-shadow(0 0 28px rgba(139,92,246,0.45))',
+              }}>Your AI journal writes itself,</span> tracks your mood, and spots what&apos;s changing.
             </h1>
 
             {/* Mobile demo strip — between headline and paragraph, above fold */}

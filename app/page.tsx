@@ -779,7 +779,7 @@ export default function VoiceJournal() {
         {/* Steps row — 4-col on all viewports */}
         <section style={{
           maxWidth: 1100, margin: '0 auto',
-          padding: '0 24px 64px',
+          padding: '0 24px 40px',
           width: '100%',
         }}>
           <div style={{
@@ -802,6 +802,97 @@ export default function VoiceJournal() {
                 <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: 0, lineHeight: 1.4 }}>{s.desc}</p>
               </motion.div>
             ))}
+          </div>
+        </section>
+
+        {/* Features section */}
+        <section style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 40px', width: '100%' }}>
+          <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(139,92,246,0.8)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Features</p>
+          <h2 style={{ fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)', fontWeight: 900, letterSpacing: '-0.03em', color: '#f4f4f5', margin: '0 0 24px', lineHeight: 1.15 }}>
+            Everything your journal needs
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+            {[
+              { icon: '🎙', title: 'Voice or text input', desc: 'Speak freely or type — browser Speech API with no upload required.' },
+              { icon: '🤖', title: 'AI mood detection', desc: 'Detects 10 emotion states from Happy to Frustrated in seconds.' },
+              { icon: '💡', title: 'Personal insights', desc: 'AI surfaces patterns in your language you might not notice yourself.' },
+              { icon: '✨', title: 'Daily affirmations', desc: 'Each entry ends with a personalised affirmation based on your words.' },
+              { icon: '📊', title: '7-day mood chart', desc: 'Visual mood wave so you can see patterns across the week.' },
+              { icon: '🔒', title: 'Private by default', desc: 'Entries stored locally in your browser — nothing sent to a server.' },
+            ].map((f, i) => (
+              <motion.div
+                key={f.title}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 + i * 0.07, duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+                className="glass"
+                style={{ borderRadius: 16, padding: '18px 16px' }}
+              >
+                <div style={{ fontSize: 22, marginBottom: 10 }}>{f.icon}</div>
+                <p style={{ fontSize: 13, fontWeight: 800, color: '#f4f4f5', margin: '0 0 6px' }}>{f.title}</p>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.55, margin: 0 }}>{f.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* Pricing section */}
+        <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 24px 64px', width: '100%' }}>
+          <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(139,92,246,0.8)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Pricing</p>
+          <h2 style={{ fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)', fontWeight: 900, letterSpacing: '-0.03em', color: '#f4f4f5', margin: '0 0 20px', lineHeight: 1.15 }}>
+            Free forever. Upgrade when you want more.
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+            {/* Free plan */}
+            <div className="glass" style={{ borderRadius: 20, padding: '24px' }}>
+              <p style={{ fontSize: 13, fontWeight: 900, color: '#f4f4f5', margin: '0 0 4px' }}>Free</p>
+              <p style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-0.04em', color: '#f4f4f5', margin: '0 0 20px' }}>
+                $0 <span style={{ fontSize: 14, fontWeight: 400, color: 'rgba(255,255,255,0.3)' }}>forever</span>
+              </p>
+              {['Voice + text journaling', 'AI mood detection', 'Personal insights', 'Daily affirmations', 'Stored locally in browser', '7-day mood chart'].map(f => (
+                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
+                  <span style={{ color: '#8b5cf6', fontWeight: 900 }}>✓</span> {f}
+                </div>
+              ))}
+              <button
+                onClick={() => setAppStarted(true)}
+                className="btn-primary"
+                style={{ width: '100%', padding: '11px', fontSize: 13, marginTop: 16 }}
+              >
+                Start journaling →
+              </button>
+            </div>
+            {/* Pro plan */}
+            <div style={{ borderRadius: 20, padding: '24px', background: 'linear-gradient(135deg, rgba(124,58,237,0.25) 0%, rgba(109,40,217,0.15) 100%)', border: '1px solid rgba(139,92,246,0.4)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <p style={{ fontSize: 13, fontWeight: 900, color: '#f4f4f5', margin: 0 }}>Pro</p>
+                <span style={{ fontSize: 9, fontWeight: 900, padding: '2px 8px', borderRadius: 99, background: '#10b981', color: '#fff' }}>COMING SOON</span>
+              </div>
+              <p style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-0.04em', color: '#f4f4f5', margin: '0 0 20px' }}>
+                $4 <span style={{ fontSize: 14, fontWeight: 400, color: 'rgba(255,255,255,0.5)' }}>/ month</span>
+              </p>
+              {['Everything in Free', 'Cloud backup & sync', 'Export journal as PDF', 'Advanced mood trends', 'Weekly AI review email', 'Priority support'].map(f => (
+                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>
+                  <span style={{ color: '#a78bfa', fontWeight: 900 }}>✓</span> {f}
+                </div>
+              ))}
+              <button
+                onClick={() => setAppStarted(true)}
+                style={{
+                  width: '100%', padding: '11px', fontSize: 13, fontWeight: 700,
+                  marginTop: 16, borderRadius: 12,
+                  background: 'rgba(255,255,255,0.9)', color: '#7c3aed',
+                  border: 'none', cursor: 'pointer',
+                  transition: 'background 150ms, transform 100ms',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#fff')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.9)')}
+                onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.97)')}
+                onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+              >
+                Join waitlist →
+              </button>
+            </div>
           </div>
         </section>
       </main>

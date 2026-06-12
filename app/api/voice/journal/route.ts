@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
       wordCount:   transcript.trim().split(/\s+/).length,
     })
   } catch (err) {
-    console.error('journal error:', err)
+    console.error('[voicejournal][voice/journal]', err)
     return NextResponse.json({ error: 'Analysis failed' }, { status: 500 })
   }
 }

@@ -17,9 +17,9 @@ export default function Navbar() {
             fontSize: 15,
             fontWeight: 900,
             letterSpacing: '-0.02em',
-            color: '#f4f4f5',
+            color: '#0f172a',
           }}>
-            Voice<span style={{ color: '#8b5cf6' }}>Journal</span>
+            Voice<span style={{ color: '#0d9488' }}>Journal</span>
           </span>
         </div>
 
@@ -29,9 +29,9 @@ export default function Navbar() {
             fontWeight: 700,
             padding: '3px 10px',
             borderRadius: 99,
-            background: 'rgba(139,92,246,0.12)',
-            border: '1px solid rgba(139,92,246,0.25)',
-            color: '#a78bfa',
+            background: 'rgba(13,148,136,0.1)',
+            border: '1px solid rgba(13,148,136,0.25)',
+            color: '#0d9488',
             letterSpacing: '0.04em',
           }}>
             FREE
@@ -42,14 +42,16 @@ export default function Navbar() {
               fontWeight: 700,
               padding: '7px 16px',
               borderRadius: 10,
-              background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+              background: 'linear-gradient(135deg, #0d9488, #0f766e)',
               border: 'none',
               color: '#fff',
               cursor: 'pointer',
-              transition: 'opacity 160ms',
+              transition: 'opacity 160ms, transform 100ms',
             }}
             onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
             onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+            onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.97)')}
+            onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
           >
             Try now
           </button>

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.0",
+    "@vercel/edge-config": "^1.4.3",
     "elevenlabs": "^1.59.0",
     "framer-motion": "^12.39.0",
     "groq-sdk": "^1.1.2",

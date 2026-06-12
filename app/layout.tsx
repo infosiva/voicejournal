@@ -9,9 +9,9 @@ import BackToTop from '@/components/BackToTop'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://ai-voice-home.vercel.app'),
-  title: 'VoiceJournal — Speak Your Thoughts, AI Reflects Them Back',
-  description: 'Speak your thoughts — AI transcribes, finds your mood patterns, and surfaces personal insights from your own words. Voice-native journaling, free.',
+  metadataBase: new URL('https://voicejournal.app'),
+  title: 'VoiceJournal — AI Voice Diary & Mood Tracking App',
+  description: 'Speak for 2 minutes — AI transcribes your voice, detects your mood, and surfaces personal insights. Free voice journaling with privacy-first local storage.',
   keywords: ['voice journal', 'AI diary', 'mood tracking', 'voice notes', 'reflection', 'journaling app'],
   openGraph: {
     title: 'VoiceJournal — AI Voice Diary & Mood Tracking',
@@ -37,29 +37,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "SoftwareApplication",
+              "@type": "WebSite",
               "name": "VoiceJournal",
+              "url": "https://voicejournal.app",
               "description": "AI-powered voice journaling and mood analysis app",
-              "applicationCategory": "HealthAndFitnessApplication",
-              "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://voicejournal.app"
+              }
             })
           }}
         />
       </head>
       <body className={`${inter.className} min-h-full antialiased`}>
-        {/* Aurora blobs */}
-        <div className="aurora aurora-primary" aria-hidden />
-        <div className="aurora aurora-secondary" aria-hidden />
-        <div className="aurora aurora-third" aria-hidden />
-        <div className="grain" aria-hidden />
-
-        <div style={{ position: 'relative', zIndex: 2 }}>
-          <Navbar />
-          {children}
-        </div>
-
+        <Navbar />
+        {children}
         <FloatingChatWrapper />
-        <BackToTop accentColor="#8b5cf6" />
+        <BackToTop accentColor="#0d9488" />
         <Script defer data-site="ai-voice-home.vercel.app" src="http://31.97.56.148:3098/t.js" strategy="afterInteractive" />
       </body>
     </html>

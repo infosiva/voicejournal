@@ -5,6 +5,7 @@ import FloatingChatWrapper from '@/components/FloatingChatWrapper'
 import Script from 'next/script'
 import Navbar from '@/components/Navbar'
 import BackToTop from '@/components/BackToTop'
+import { loadSiteTheme, buildThemeStyleTag } from '@/lib/theme-loader'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -27,10 +28,21 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const theme = await loadSiteTheme('voicejournal')
+  const themeStyle = buildThemeStyleTag(theme, {
+    background: '#f8fafc',
+    primary: '#0d9488',
+    secondary: '#0ea5e9',
+  })
+
   return (
     <html lang="en" className="h-full">
       <head>
+        <meta name="google-adsense-account" content="ca-pub-4237294630161176" />
+        {themeStyle && (
+          <style dangerouslySetInnerHTML={{ __html: themeStyle }} />
+        )}
         <Script
           id="structured-data"
           type="application/ld+json"

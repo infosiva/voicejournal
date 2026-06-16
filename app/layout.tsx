@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import FloatingChatWrapper from '@/components/FloatingChatWrapper'
+import FeedbackWidget from '@/components/FeedbackWidget'
 import Script from 'next/script'
 import Navbar from '@/components/Navbar'
 import BackToTop from '@/components/BackToTop'
@@ -65,6 +66,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Navbar />
         {children}
         <FloatingChatWrapper />
+        <FeedbackWidget siteName="VoiceJournal" accentColor="#0d9488" accentColor2="#0f766e" position="left" />
         <BackToTop accentColor="#0d9488" />
         <Script defer data-site="ai-voice-home.vercel.app" src="http://31.97.56.148:3098/t.js" strategy="afterInteractive" />
       </body>

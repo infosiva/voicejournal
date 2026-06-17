@@ -16,7 +16,7 @@ html, body {
 }
 
 body {
-  background: #f8fafc;
+  background: var(--background);
   color: #0f172a;
   font-family: system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -25,19 +25,19 @@ body {
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(13,148,136,0.3); border-radius: 99px; }
+::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 99px; }
 
 /* ── Glass cards (light mode) ── */
 .glass {
   background: rgba(255,255,255,0.8);
-  border: 1px solid rgba(13,148,136,0.12);
+  border: 1px solid rgba(139,92,246,0.12);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 1px 4px rgba(15,23,42,0.06);
 }
 .glass-strong {
   background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(13,148,136,0.18);
+  border: 1px solid rgba(139,92,246,0.18);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 2px 12px rgba(15,23,42,0.08);
@@ -48,10 +48,10 @@ body {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(248,250,252,0.85);
+  background: rgba(245,240,255,0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(13,148,136,0.1);
+  border-bottom: 1px solid rgba(139,92,246,0.1);
 }
 
 /* ── Buttons ── */

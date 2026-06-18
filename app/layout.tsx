@@ -32,9 +32,9 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const theme = await loadSiteTheme('voicejournal')
   const themeStyle = buildThemeStyleTag(theme, {
-    background: '#f8fafc',
-    primary: '#0d9488',
-    secondary: '#0ea5e9',
+    background: '#f5f0ff',
+    primary: '#8b5cf6',
+    secondary: '#7c3aed',
   })
 
   return (
@@ -62,12 +62,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           }}
         />
       </head>
-      <body className={`${inter.className} min-h-full antialiased`}>
+      <body className={`${inter.className} min-h-full antialiased`} style={{ background: 'var(--background, #f5f0ff)' }}>
         <Navbar />
         {children}
         <FloatingChatWrapper />
-        <FeedbackWidget siteName="VoiceJournal" accentColor="#0d9488" accentColor2="#0f766e" position="left" />
-        <BackToTop accentColor="#0d9488" />
+        <FeedbackWidget siteName="VoiceJournal" accentColor="#8b5cf6" accentColor2="#7c3aed" position="left" />
+        <BackToTop accentColor="#8b5cf6" />
         <Script defer data-site="ai-voice-home.vercel.app" src="http://31.97.56.148:3098/t.js" strategy="afterInteractive" />
       </body>
     </html>

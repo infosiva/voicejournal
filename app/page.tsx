@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useRef, useEffect, useCallback } from 'react'
+import LiveStatsBar from '@/components/LiveStatsBar'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -337,10 +338,10 @@ function DemoPanel() {
 
   return (
     <div style={{ position: 'relative' }}>
-      {/* Soft teal glow behind panel */}
+      {/* Soft violet glow behind panel */}
       <div style={{
         position: 'absolute', inset: -20,
-        background: 'radial-gradient(ellipse at 50% 50%, rgba(13,148,136,0.08) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse at 50% 50%, rgba(139,92,246,0.1) 0%, transparent 70%)',
         filter: 'blur(24px)', pointerEvents: 'none',
       }} />
 
@@ -348,20 +349,20 @@ function DemoPanel() {
         {/* Panel header */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20,
-          paddingBottom: 14, borderBottom: '1px solid rgba(13,148,136,0.1)',
+          paddingBottom: 14, borderBottom: '1px solid rgba(139,92,246,0.1)',
         }}>
           <div style={{
             width: 8, height: 8, borderRadius: '50%',
-            background: '#0d9488', boxShadow: '0 0 6px rgba(13,148,136,0.5)',
+            background: '#8b5cf6', boxShadow: '0 0 6px rgba(139,92,246,0.5)',
           }} />
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#0d9488', letterSpacing: '0.06em' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#8b5cf6', letterSpacing: '0.06em' }}>
             VOICE JOURNAL
           </span>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
             {DEMO_ENTRIES.map((_, i) => (
               <div key={i} style={{
                 width: i === activeIdx ? 16 : 6, height: 6, borderRadius: 99,
-                background: i === activeIdx ? '#0d9488' : 'rgba(13,148,136,0.2)',
+                background: i === activeIdx ? '#8b5cf6' : 'rgba(139,92,246,0.2)',
                 transition: 'width 300ms cubic-bezier(0.23,1,0.32,1), background 300ms',
               }} />
             ))}
@@ -610,6 +611,7 @@ export default function VoiceJournal() {
       const json = await res.json()
       if (!res.ok) { setError(json.error ?? 'Analysis failed'); return }
       setResult(json)
+      fetch('/api/stats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'insight_generated' }) }).catch(() => {})
     } catch {
       setError('Network error — check connection and try again')
     } finally {
@@ -626,6 +628,8 @@ export default function VoiceJournal() {
     const updated = [entry, ...entries]
     setEntries(updated)
     saveEntries(updated)
+    fetch('/api/stats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'entry_recorded' }) }).catch(() => {})
+    if (duration > 0) fetch('/api/stats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'minutes_transcribed' }) }).catch(() => {})
     setTranscript('')
     setResult(null)
     setDuration(0)
@@ -648,7 +652,7 @@ export default function VoiceJournal() {
   // ── Hero / landing ──────────────────────────────────────────────────────────
   if (!appStarted) {
     return (
-      <main style={{ minHeight: 'calc(100vh - 56px)', display: 'flex', flexDirection: 'column', background: '#f8fafc' }}>
+      <main style={{ minHeight: 'calc(100vh - 56px)', display: 'flex', flexDirection: 'column', background: 'var(--background, #f5f0ff)' }}>
 
         {/* Hero split */}
         <section style={{
@@ -681,12 +685,12 @@ export default function VoiceJournal() {
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '5px 14px', borderRadius: 9999, marginBottom: 24,
-              background: 'rgba(13,148,136,0.08)',
-              border: '1px solid rgba(13,148,136,0.2)',
-              fontSize: 10, color: '#0d9488', fontWeight: 700,
+              background: 'rgba(139,92,246,0.08)',
+              border: '1px solid rgba(139,92,246,0.2)',
+              fontSize: 10, color: '#8b5cf6', fontWeight: 700,
               letterSpacing: '0.1em', textTransform: 'uppercase',
             }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#0d9488', display: 'inline-block', flexShrink: 0 }} />
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#8b5cf6', display: 'inline-block', flexShrink: 0 }} />
               FREE AI JOURNALING
             </div>
 
@@ -700,7 +704,7 @@ export default function VoiceJournal() {
             }}>
               Your voice,{' '}
               <span style={{
-                background: 'linear-gradient(135deg, #0d9488 0%, #14b8a6 100%)',
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               }}>reflected back</span>{' '}by AI.
             </h1>
@@ -734,8 +738,8 @@ export default function VoiceJournal() {
                 <span key={pill} style={{
                   fontSize: 11, fontWeight: 600,
                   padding: '4px 10px', borderRadius: 99,
-                  background: 'rgba(13,148,136,0.06)',
-                  border: '1px solid rgba(13,148,136,0.15)',
+                  background: 'rgba(139,92,246,0.06)',
+                  border: '1px solid rgba(139,92,246,0.15)',
                   color: 'rgba(15,23,42,0.55)',
                 }}>
                   {pill}
@@ -754,6 +758,8 @@ export default function VoiceJournal() {
             <DemoPanel />
           </motion.div>
         </section>
+
+        <LiveStatsBar />
 
         {/* Steps row */}
         <section style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 32px', width: '100%' }}>
@@ -876,7 +882,7 @@ export default function VoiceJournal() {
 
   // ── App view ──────────────────────────────────────────────────────────────────
   return (
-    <main style={{ maxWidth: 680, margin: '0 auto', padding: '28px 16px 100px', background: '#f8fafc', minHeight: 'calc(100vh - 56px)' }}>
+    <main style={{ maxWidth: 680, margin: '0 auto', padding: '28px 16px 100px', background: 'var(--background, #f5f0ff)', minHeight: 'calc(100vh - 56px)' }}>
 
       {/* Back to landing + tabs */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>

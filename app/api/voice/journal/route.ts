@@ -10,6 +10,7 @@
  *   - topic tags
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { AI_LIMITER } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -109,6 +110,8 @@ Be warm, non-judgmental, and concise. Output ONLY the JSON.`
 }
 
 export async function POST(req: NextRequest) {
+  const limited = AI_LIMITER.check(req); if (limited) return limited
+
   try {
     const { transcript } = await req.json()
 

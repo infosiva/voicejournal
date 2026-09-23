@@ -7,6 +7,7 @@ import Script from 'next/script'
 import Navbar from '@/components/Navbar'
 import BackToTop from '@/components/BackToTop'
 import { loadSiteTheme, buildThemeStyleTag } from '@/lib/theme-loader'
+import { getSiteFlags } from '@/lib/flags'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -31,6 +32,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const theme = await loadSiteTheme('voicejournal')
+  const flags = await getSiteFlags('voicejournal')
   const themeStyle = buildThemeStyleTag(theme, {
     background: '#f5f0ff',
     primary: '#8b5cf6',
@@ -71,7 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className={`${inter.className} min-h-full antialiased`} style={{ background: 'var(--background, #f5f0ff)' }}>
         <Navbar />
         {children}
-        <FloatingChatWrapper />
+        {flags.chatbot && <FloatingChatWrapper />}
         <FeedbackWidget siteName="VoiceJournal" accentColor="#8b5cf6" accentColor2="#7c3aed" position="left" />
         <BackToTop accentColor="#8b5cf6" />
         <Script defer data-site="ai-voice-home.vercel.app" src="http://31.97.56.148:3098/t.js" strategy="afterInteractive" />

@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   try {
     const { messages, system } = await req.json()
     const res = await g().chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-20b',
       messages: [{ role: 'system', content: system ?? 'You are VoiceHome AI — a voice and smart home assistant. Help users with voice AI features, home automation tips, and getting the most from AI-powered home tech. Be friendly and concise.' }, ...messages],
       max_tokens: 400,
     })

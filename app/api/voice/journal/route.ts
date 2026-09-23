@@ -48,7 +48,7 @@ Be warm, non-judgmental, and concise. Output ONLY the JSON.`
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-20b',
           messages: [{ role: 'user', content: prompt }],
           max_tokens: 512,
           temperature: 0.6,

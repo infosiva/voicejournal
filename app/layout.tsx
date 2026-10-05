@@ -9,6 +9,7 @@ import BackToTop from '@/components/BackToTop'
 import { loadSiteTheme, buildThemeStyleTag } from '@/lib/theme-loader'
 import { getSiteFlags } from '@/lib/flags'
 
+import { MotionProvider } from "@infosiva/shared-ui/modern";
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -72,7 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className={`${inter.className} min-h-full antialiased`} style={{ background: 'var(--background, #f5f0ff)' }}>
         <Navbar />
-        {children}
+        <MotionProvider>{children}</MotionProvider>
         {flags.chatbot && <FloatingChatWrapper />}
         <FeedbackWidget siteName="VoiceJournal" accentColor="#8b5cf6" accentColor2="#7c3aed" position="left" />
         <BackToTop accentColor="#8b5cf6" />

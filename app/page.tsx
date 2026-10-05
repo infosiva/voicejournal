@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import LiveStatsBar from '@/components/LiveStatsBar'
+import { MagneticButton } from "@infosiva/shared-ui/modern";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -724,13 +725,13 @@ export default function VoiceJournal() {
               Speak freely — AI detects your mood, surfaces personal insights, and builds your journal. Private, browser-based, free.
             </p>
 
-            <button
+            <MagneticButton
               className="btn-primary"
               onClick={() => setAppStarted(true)}
               style={{ fontSize: 15, padding: '14px 36px', borderRadius: 14 }}
             >
               Start journaling →
-            </button>
+            </MagneticButton>
 
             {/* Feature pills */}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 24 }}>

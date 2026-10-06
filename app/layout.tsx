@@ -6,7 +6,7 @@ import FeedbackWidget from '@/components/FeedbackWidget'
 import Script from 'next/script'
 import Navbar from '@/components/Navbar'
 import BackToTop from '@/components/BackToTop'
-import { loadSiteTheme, buildThemeStyleTag } from '@/lib/theme-loader'
+import { loadSiteTheme, buildThemeStyleTag, buildGa4Snippet } from '@/lib/theme-loader'
 import { getSiteFlags } from '@/lib/flags'
 
 import { MotionProvider } from "@infosiva/shared-ui/modern";
@@ -70,6 +70,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             })
           }}
         />
+      {buildGa4Snippet(theme) && <script dangerouslySetInnerHTML={{ __html: buildGa4Snippet(theme) }} />}
       </head>
       <body className={`${inter.className} min-h-full antialiased`} style={{ background: 'var(--background, #f5f0ff)' }}>
         <Navbar />

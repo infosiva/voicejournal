@@ -10,6 +10,7 @@ import { loadSiteTheme, buildThemeStyleTag, buildGa4Snippet } from '@/lib/theme-
 import { getSiteFlags } from '@/lib/flags'
 
 import { MotionProvider } from "@infosiva/shared-ui/modern";
+import { AnimatedBg } from '@/components/AnimatedBg'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -73,6 +74,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       {buildGa4Snippet(theme) && <script dangerouslySetInnerHTML={{ __html: buildGa4Snippet(theme) }} />}
       </head>
       <body className={`${inter.className} min-h-full antialiased`} style={{ background: 'var(--background, #f5f0ff)' }}>
+        <AnimatedBg theme={theme} fallback="mesh" />
         <Navbar />
         <MotionProvider>{children}</MotionProvider>
         {flags.chatbot && <FloatingChatWrapper />}

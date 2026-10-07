@@ -1,3 +1,4 @@
+import { sanitizeUserInput } from '@/lib/guard'
 import { NextRequest, NextResponse } from 'next/server'
 import Groq from 'groq-sdk'
 import { AI_LIMITER } from '@/lib/rateLimit'
@@ -10,6 +11,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const { messages, system } = await req.json()
+    for (const m of Array.isArray(messages) ? messages : []) if (m && typeof m.content === 'string') m.content = sanitizeUserInput(m.content).text
     const res = await g().chat.completions.create({
       model: 'openai/gpt-oss-20b',
       messages: [{ role: 'system', content: system ?? 'You are VoiceHome AI — a voice and smart home assistant. Help users with voice AI features, home automation tips, and getting the most from AI-powered home tech. Be friendly and concise.' }, ...messages],

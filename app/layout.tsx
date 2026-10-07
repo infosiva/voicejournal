@@ -71,7 +71,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             })
           }}
         />
-      {buildGa4Snippet(theme) && <script dangerouslySetInnerHTML={{ __html: buildGa4Snippet(theme) }} />}
+      {buildGa4Snippet(theme) ? <script dangerouslySetInnerHTML={{ __html: buildGa4Snippet(theme) }} /> : null}
       </head>
       <body className={`${inter.className} min-h-full antialiased`} style={{ background: 'var(--background, #f5f0ff)' }}>
         <AnimatedBg theme={theme} fallback="mesh" />

@@ -78,7 +78,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {flags.chatbot && <FloatingChatWrapper />}
         <FeedbackWidget siteName="VoiceJournal" accentColor="#8b5cf6" accentColor2="#7c3aed" position="left" />
         <BackToTop accentColor="#8b5cf6" />
-        <Script defer data-site="ai-voice-home.vercel.app" src="http://31.97.56.148:3098/t.js" strategy="afterInteractive" />
+        <Script defer data-site="ai-voice-home.vercel.app" src="/t.js" strategy="afterInteractive" />
       </body>
     </html>
   )

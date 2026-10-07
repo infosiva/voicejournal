@@ -728,7 +728,7 @@ export default function VoiceJournal() {
             <MagneticButton
               className="btn-primary"
               onClick={() => setAppStarted(true)}
-              style={{ fontSize: 15, padding: '14px 36px', borderRadius: 14 }}
+              style={{ background: undefined, color: undefined, fontSize: 15, padding: '14px 36px', borderRadius: 14 }}
             >
               Start journaling →
             </MagneticButton>
